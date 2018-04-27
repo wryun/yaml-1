@@ -42,6 +42,21 @@ func Unmarshal(y []byte, o interface{}) error {
 	return nil
 }
 
+func YAMLTypesToJSONTypes(y interface{}, o interface{}) error {
+	vo := reflect.ValueOf(o)
+	j, err := yamlInterfaceToJSON(y, &vo)
+	if err != nil {
+		return fmt.Errorf("error converting YAML types to JSON: %v", err)
+	}
+
+	err = json.Unmarshal(j, o)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling JSON: %v", err)
+	}
+
+	return nil
+}
+
 // Convert JSON to YAML.
 func JSONToYAML(j []byte) ([]byte, error) {
 	// Convert the JSON to an object.
@@ -72,6 +87,16 @@ func JSONToYAML(j []byte) ([]byte, error) {
 //   encoded data makes it all the way through to the JSON.
 func YAMLToJSON(y []byte) ([]byte, error) {
 	return yamlToJSON(y, nil)
+}
+
+func yamlInterfaceToJSON(yamlObj interface{}, jsonTarget *reflect.Value) ([]byte, error) {
+	jsonObj, err := convertToJSONableObject(yamlObj, jsonTarget)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert this object to JSON and return the data.
+	return json.Marshal(jsonObj)
 }
 
 func yamlToJSON(y []byte, jsonTarget *reflect.Value) ([]byte, error) {
